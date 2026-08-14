@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
 import { sendWaitlistWelcomeEmail } from '@/lib/resend'
 
 export async function POST(request: Request) {
@@ -25,40 +23,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const dataDir = path.join(process.cwd(), 'data')
-    const filePath = path.join(dataDir, 'waitlist.json')
-
-    try {
-      await fs.mkdir(dataDir, { recursive: true })
-    } catch {
-      // Directory exists or created
-    }
-
-    let waitlist: Array<{ email: string; createdAt: string }> = []
-    try {
-      const fileData = await fs.readFile(filePath, 'utf-8')
-      waitlist = JSON.parse(fileData)
-    } catch {
-      waitlist = []
-    }
-
-    const existingIndex = waitlist.findIndex((entry) => entry.email === trimmedEmail)
-    if (existingIndex !== -1) {
-      return NextResponse.json({
-        success: true,
-        alreadyRegistered: true,
-        message: "You're already on the waitlist! We'll reach out soon.",
-      })
-    }
-
-    waitlist.push({
-      email: trimmedEmail,
-      createdAt: new Date().toISOString(),
-    })
-
-    await fs.writeFile(filePath, JSON.stringify(waitlist, null, 2), 'utf-8')
-
-    // Send confirmation email via Resend
+    // Send confirmation email via Resend and add to Audience (handled in lib/resend.ts)
     await sendWaitlistWelcomeEmail(trimmedEmail)
 
     return NextResponse.json({
