@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { sendWaitlistWelcomeEmail } from '@/lib/resend'
 
 export async function POST(request: Request) {
   try {
@@ -56,6 +57,9 @@ export async function POST(request: Request) {
     })
 
     await fs.writeFile(filePath, JSON.stringify(waitlist, null, 2), 'utf-8')
+
+    // Send confirmation email via Resend
+    await sendWaitlistWelcomeEmail(trimmedEmail)
 
     return NextResponse.json({
       success: true,
