@@ -1,5 +1,4 @@
-import { ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { WaitlistForm } from '@/components/waitlist-form'
 
 export function FinalCta() {
   return (
@@ -23,18 +22,11 @@ export function FinalCta() {
           Connect your GitHub repo, create a release, and know whether you are
           safe to deploy. One screen. One answer.
         </p>
-        <div className="mt-10 flex items-center gap-3">
-          <Button size="lg" className="font-mono text-xs uppercase tracking-wider">
-            Get Started
-            <ArrowRight className="size-4" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-border bg-transparent font-mono text-xs uppercase tracking-wider text-foreground hover:bg-secondary"
-          >
-            Talk to us
-          </Button>
+        <div className="mt-10 flex w-full max-w-md flex-col items-center gap-2">
+          <WaitlistForm inputId="cta-waitlist-email" buttonText="Join Waitlist" />
+          <p className="font-mono text-[11px] text-muted-foreground">
+            Early access rollout · No spam ever
+          </p>
         </div>
       </div>
     </section>

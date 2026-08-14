@@ -35,9 +35,12 @@ export function SiteHeader() {
             <span className="size-1.5 animate-pulse-dot rounded-full bg-success" aria-hidden="true" />
             ALL SYSTEMS GO
           </span>
-          <Button size="sm" className="font-mono text-xs uppercase tracking-wider">
-            Get Started
-          </Button>
+          <a
+            href="#product"
+            className="inline-flex h-7 items-center justify-center rounded-lg bg-primary px-2.5 font-mono text-[0.8rem] font-medium uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/80"
+          >
+            Join Waitlist
+          </a>
         </div>
       </div>
     </header>
