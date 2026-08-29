@@ -1,0 +1,7 @@
+allowBuilds:
+  # sharp powers next/image's optimization — its install script builds a real
+  # binary, so skipping it can silently break image optimization at runtime.
+  sharp: true
+  # msw is a transitive dependency (not used directly by this app); its
+  # install script only matters for browser-based mocking we don't use.
+  msw: false
