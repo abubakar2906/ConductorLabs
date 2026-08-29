@@ -5,12 +5,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { verifyToken } from '@clerk/backend';
-import { createClerkClient } from '@clerk/backend';
 import { Observable } from 'rxjs';
-
-const clerk = createClerkClient({
-    secretKey: process.env.CLERK_SECRET_KEY,
-});
 
 @Injectable()
 export class ClerkGuard implements CanActivate {
