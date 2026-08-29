@@ -1,0 +1,5 @@
+# Claude Code local tooling config — not app code, not needed by collaborators.
+.claude/
+
+# Internal engineering notes — a deliverable for the founder, not repo docs.
+ENGINEERING_REPORT.md

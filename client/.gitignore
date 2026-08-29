@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Claude Code — just references AGENTS.md, not needed in the repo.
+CLAUDE.md
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
