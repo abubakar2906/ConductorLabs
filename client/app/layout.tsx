@@ -17,6 +17,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Conductor Labs",
   description: "Deployment readiness dashboard — know when you're safe to ship.",
+  icons: {
+    // The favicon follows the BROWSER's theme (tab bar background), not the
+    // dashboard's own always-dark UI — hence swapping on prefers-color-scheme.
+    icon: [
+      { url: "/conductor-mark-dark.svg", media: "(prefers-color-scheme: light)" },
+      { url: "/conductor-mark-light.svg", media: "(prefers-color-scheme: dark)" },
+      { url: "/conductor-mark-dark.svg", type: "image/svg+xml" },
+    ],
+    apple: "/conductor-app-icon-dark-1024.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
