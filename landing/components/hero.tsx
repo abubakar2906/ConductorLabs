@@ -1,5 +1,8 @@
+import { ArrowRight } from 'lucide-react'
 import { ProductMockup } from '@/components/product-mockup'
-import { WaitlistForm } from '@/components/waitlist-form'
+import { buttonVariants } from '@/components/ui/button'
+import { SIGN_UP_URL } from '@/lib/app-url'
+import { cn } from '@/lib/utils'
 
 export function Hero() {
   return (
@@ -29,9 +32,18 @@ export function Hero() {
           </p>
 
           <div className="flex w-full flex-col gap-2 md:w-auto">
-            <WaitlistForm inputId="hero-waitlist-email" />
+            <a
+              href={SIGN_UP_URL}
+              className={cn(
+                buttonVariants({ size: 'lg' }),
+                'w-full font-mono text-xs uppercase tracking-wider hover:bg-primary/80 sm:w-auto',
+              )}
+            >
+              Get Started
+              <ArrowRight className="size-3.5" />
+            </a>
             <p className="font-mono text-[11px] text-muted-foreground">
-              Request early access · Instant GitHub onboarding
+              Free while in beta · Instant GitHub onboarding
             </p>
           </div>
         </div>

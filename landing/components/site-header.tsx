@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { ConductorLogo } from '@/components/conductor-logo'
+import { SIGN_UP_URL } from '@/lib/app-url'
 
 const navLinks = [
   { label: 'Product', href: '#product' },
@@ -36,10 +36,10 @@ export function SiteHeader() {
             ALL SYSTEMS GO
           </span>
           <a
-            href="#product"
+            href={SIGN_UP_URL}
             className="inline-flex h-7 items-center justify-center rounded-lg bg-primary px-2.5 font-mono text-[0.8rem] font-medium uppercase tracking-wider text-primary-foreground transition-all hover:bg-primary/80"
           >
-            Join Waitlist
+            Get Started
           </a>
         </div>
       </div>

@@ -1,4 +1,7 @@
-import { WaitlistForm } from '@/components/waitlist-form'
+import { ArrowRight } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
+import { SIGN_UP_URL } from '@/lib/app-url'
+import { cn } from '@/lib/utils'
 
 export function FinalCta() {
   return (
@@ -23,9 +26,15 @@ export function FinalCta() {
           safe to deploy. One screen. One answer.
         </p>
         <div className="mt-10 flex w-full max-w-md flex-col items-center gap-2">
-          <WaitlistForm inputId="cta-waitlist-email" buttonText="Join Waitlist" />
+          <a
+            href={SIGN_UP_URL}
+            className={cn(buttonVariants({ size: 'lg' }), 'font-mono text-xs uppercase tracking-wider hover:bg-primary/80')}
+          >
+            Get Started
+            <ArrowRight className="size-3.5" />
+          </a>
           <p className="font-mono text-[11px] text-muted-foreground">
-            Early access rollout · No spam ever
+            Free while in beta · Takes 30 seconds
           </p>
         </div>
       </div>
