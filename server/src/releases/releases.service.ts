@@ -57,4 +57,20 @@ export class ReleasesService {
         if (error) throw error
         return data
     }
+
+    // Delete one release for this user. The user_id filter means a release
+    // that belongs to someone else is indistinguishable from one that doesn't
+    // exist — both come back null and the controller answers 404. Deleting
+    // twice in a row also lands on null, so retries are harmless (idempotent).
+    async deleteByIdForUser(userId: string, id: string): Promise<Release | null> {
+        const { data, error } = await supabase()
+            .from('releases')
+            .delete()
+            .eq('user_id', userId)
+            .eq('id', id)
+            .select()
+            .maybeSingle()
+        if (error) throw error
+        return data ?? null
+    }
 }
