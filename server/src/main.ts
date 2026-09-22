@@ -7,7 +7,10 @@ import { AppModule } from './app.module';
 setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody: true makes Nest's JSON parser stash the undecoded request bytes
+  // on req.rawBody — the GitHub webhook HMAC is computed over those exact
+  // bytes, so verifying against JSON.stringify(req.body) would not match.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Let the Next.js client (a different origin) call this API from the browser.
   // Without this, the browser blocks every request from localhost:3000.
