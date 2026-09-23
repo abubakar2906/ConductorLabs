@@ -3,3 +3,6 @@
 
 # Internal engineering notes — a deliverable for the founder, not repo docs.
 ENGINEERING_REPORT.md
+
+# Helix sandbox command-overflow artifacts — local tooling, never ship them.
+.helix-overflow/

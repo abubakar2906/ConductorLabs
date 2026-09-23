@@ -8,13 +8,14 @@ import { StatusPill } from "@/components/status-pill";
 import { NewReleaseSlideOver } from "@/components/new-release-slideover";
 import { fetchReleases, fetchReleaseStatus, type Release } from "@/lib/api";
 import { computeReadiness, type Readiness } from "@/lib/readiness";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 
-type Filter = "all" | "ready" | "blocked";
+type Filter = "all" | "ready" | "running" | "blocked";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "ready", label: "Ready" },
+  { key: "running", label: "Running" },
   { key: "blocked", label: "Blocked" },
 ];
 
@@ -47,6 +48,13 @@ export function ReleasesView() {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
+  // Remount key: bump on every open so the wizard always starts fresh.
+  const [wizardKey, setWizardKey] = useState(0);
+
+  function openWizard() {
+    setWizardKey((k) => k + 1);
+    setWizardOpen(true);
+  }
 
   useEffect(() => {
     let active = true;
@@ -93,6 +101,20 @@ export function ReleasesView() {
       .includes(q);
   });
 
+  // Tab counts — a release is counted once its status has loaded.
+  const counts: Record<Filter, number> = {
+    all: releases?.length ?? 0,
+    ready: 0,
+    running: 0,
+    blocked: 0,
+  };
+  if (releases) {
+    for (const r of releases) {
+      const st = statuses[r.id];
+      if (st && st !== "loading" && st !== "error") counts[st.status] += 1;
+    }
+  }
+
   return (
     <>
       <header className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
@@ -116,7 +138,7 @@ export function ReleasesView() {
           </div>
           <button
             type="button"
-            onClick={() => setWizardOpen(true)}
+            onClick={openWizard}
             className="shrink-0 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 active:translate-y-px"
           >
             New Release
@@ -136,7 +158,7 @@ export function ReleasesView() {
             </p>
             <button
               type="button"
-              onClick={() => setWizardOpen(true)}
+              onClick={openWizard}
               className="mt-5 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 active:translate-y-px"
             >
               New Release
@@ -159,6 +181,14 @@ export function ReleasesView() {
                   )}
                 >
                   {f.label}
+                  <span
+                    className={cn(
+                      "ml-1.5 rounded-full px-1.5 py-px text-[10px] tabular-nums",
+                      filter === f.key ? "bg-foreground/10 opacity-100" : "opacity-60",
+                    )}
+                  >
+                    {counts[f.key]}
+                  </span>
                 </button>
               ))}
             </div>
@@ -175,13 +205,50 @@ export function ReleasesView() {
                     href={`/releases/${r.id}`}
                     className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-muted-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20"
                   >
-                    <div>
-                      <p className="text-sm font-medium text-card-foreground">{r.name}</p>
-                      <p className="mt-2 truncate font-mono text-xs text-muted-foreground">
-                        {repoShort(r.repo_full_name)} / {r.target_branch}
-                      </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-card-foreground">{r.name}</p>
+                        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+                          {repoShort(r.repo_full_name)} / {r.target_branch}
+                        </p>
+                      </div>
+                      <CardStatus state={statuses[r.id]} />
                     </div>
-                    <CardStatus state={statuses[r.id]} />
+                    {(() => {
+                      const st = statuses[r.id];
+                      if (!st || st === "loading" || st === "error") return null;
+                      const top = (
+                        st.status === "blocked"
+                          ? st.blockingItems
+                          : st.runningItems
+                      ).slice(0, 2);
+                      return (
+                        <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
+                          <p className="truncate text-xs text-muted-foreground">{st.why}</p>
+                          {top.length > 0 && (
+                            <ul className="flex flex-col gap-0.5">
+                              {top.map((item) => (
+                                <li
+                                  key={item.id}
+                                  className="truncate font-mono text-xs text-foreground/80"
+                                >
+                                  {item.ref}
+                                  {item.label ? ` — ${item.label}` : ""}
+                                  {item.reason ? (
+                                    <span className="text-muted-foreground"> · {item.reason.toLowerCase()}</span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {r.last_push_at ? (
+                            <p className="text-[11px] text-muted-foreground/80">
+                              Last push {timeAgo(r.last_push_at)}
+                            </p>
+                          ) : null}
+                        </div>
+                      );
+                    })()}
                   </Link>
                 ))}
               </div>
@@ -190,7 +257,9 @@ export function ReleasesView() {
         )}
       </main>
 
-      <NewReleaseSlideOver open={wizardOpen} onClose={() => setWizardOpen(false)} />
+      {wizardOpen && (
+        <NewReleaseSlideOver key={wizardKey} onClose={() => setWizardOpen(false)} />
+      )}
     </>
   );
 }

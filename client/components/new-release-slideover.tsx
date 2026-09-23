@@ -16,13 +16,7 @@ function repoShort(fullName: string): string {
   return i === -1 ? fullName : fullName.slice(i + 1);
 }
 
-export function NewReleaseSlideOver({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function NewReleaseSlideOver({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { getToken } = useAuth();
 
@@ -36,17 +30,8 @@ export function NewReleaseSlideOver({
   const [branches, setBranches] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset and load the user's repos every time the panel opens.
+  // Load the user's repos on mount.
   useEffect(() => {
-    if (!open) return;
-    setStep("name");
-    setName("");
-    setRepo(null);
-    setBranch(null);
-    setRepos(null);
-    setBranches(null);
-    setError(null);
-
     let active = true;
     (async () => {
       try {
@@ -63,17 +48,23 @@ export function NewReleaseSlideOver({
     return () => {
       active = false;
     };
-  }, [open, getToken]);
+  }, [getToken]);
 
   // Close on Escape (except mid-save).
   useEffect(() => {
-    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && step !== "saving") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, step, onClose]);
+  }, [step, onClose]);
+
+  // Slide the panel in after mount (the parent mounts this only when open).
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const stepIndex = STEP_ORDER.indexOf(step); // -1 while saving
   const saving = step === "saving";
@@ -125,10 +116,7 @@ export function NewReleaseSlideOver({
   }
 
   return (
-    <div
-      className={cn("fixed inset-0 z-50", open ? "" : "pointer-events-none")}
-      aria-hidden={!open}
-    >
+    <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <button
         type="button"
@@ -137,7 +125,7 @@ export function NewReleaseSlideOver({
         onClick={() => !saving && onClose()}
         className={cn(
           "absolute inset-0 cursor-default bg-black/40 transition-opacity duration-200",
-          open ? "opacity-100" : "opacity-0",
+          entered ? "opacity-100" : "opacity-0",
         )}
       />
 
@@ -148,7 +136,7 @@ export function NewReleaseSlideOver({
         aria-label="New release"
         className={cn(
           "absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-card shadow-2xl shadow-black/50 transition-transform duration-300 ease-out",
-          open ? "translate-x-0" : "translate-x-full",
+          entered ? "translate-x-0" : "translate-x-full",
         )}
       >
         {/* Header */}

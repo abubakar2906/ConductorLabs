@@ -41,14 +41,16 @@ export class GithubController {
     }
 
     // GET /github/release-status?repo=owner/name&branch=main
-    // Returns the real open PRs + CI checks for that repo/branch.
+    // Returns the real open PRs + CI checks (with links/authors/timestamps)
+    // plus the branch's tip commit, so the UI can say WHY a release is
+    // ready, blocked, or running.
     @Get('release-status')
     async releaseStatus(
         @Req() req: any,
         @Query('repo') repo: string,
         @Query('branch') branch: string,
     ) {
-        const checks = await this.github.getReleaseChecks(await this.tokenFor(req), repo, branch)
-        return { repo, branch, checks }
+        const { checks, branchTip } = await this.github.getReleaseChecks(await this.tokenFor(req), repo, branch)
+        return { repo, branch, checks, branchTip }
     }
 }
