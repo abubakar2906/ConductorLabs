@@ -2,7 +2,8 @@
 
 /* Design tokens mirror the landing site (landing/app/globals.css) so the
    dashboard and marketing page share one system. Color is functional:
-   --success (green) and --warning (amber) mean ONLY Ready / Blocked. */
+   --success (green), --running (blue), and --warning (amber) mean ONLY
+    Ready / Running / Blocked. */
 
 @theme inline {
   --font-sans: var(--font-geist-sans), "Geist Fallback", system-ui, sans-serif;
@@ -26,6 +27,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-success: var(--success);
+  --color-running: var(--running);
   --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --color-sidebar: var(--sidebar);
@@ -59,6 +61,7 @@
   --primary: oklch(0.78 0.16 160);
   --primary-foreground: oklch(0.13 0.02 160);
   --success: oklch(0.78 0.16 160);
+  --running: oklch(0.72 0.14 240);
   --warning: oklch(0.79 0.14 75);
   --destructive: oklch(0.63 0.19 25);
   --radius: 0.625rem;

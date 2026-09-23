@@ -9,6 +9,9 @@ export type Release = {
     repo_full_name: string
     target_branch: string
     created_at: string
+    // Set by the GitHub webhook each time a push lands on target_branch.
+    // Nullable — older rows and repos without webhooks never get one.
+    last_push_at: string | null
 }
 
 export type CreateReleaseInput = {

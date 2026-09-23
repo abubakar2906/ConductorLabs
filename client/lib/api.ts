@@ -5,7 +5,8 @@
 // exactly what the server's ClerkGuard checks. The token is fetched on the
 // client via Clerk's `getToken()` and passed into these helpers.
 
-import type { ReleaseCheck } from "@/lib/readiness";
+import type { BranchTip, ReleaseCheck } from "@/lib/readiness";
+export type { BranchTip, ReleaseCheck } from "@/lib/readiness";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -57,6 +58,8 @@ export type Release = {
   repo_full_name: string;
   target_branch: string;
   created_at: string;
+  // Set by the GitHub webhook on each push to target_branch; null for older rows.
+  last_push_at: string | null;
 };
 
 export function fetchReleases(token: string | null): Promise<Release[]> {
@@ -108,6 +111,7 @@ export type ReleaseStatusResponse = {
   repo: string;
   branch: string;
   checks: ReleaseCheck[];
+  branchTip: BranchTip | null;
 };
 
 export function fetchReleaseStatus(
