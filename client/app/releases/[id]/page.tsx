@@ -15,6 +15,7 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
+import { ReleaseNotesCard } from "@/components/release-notes-card";
 import { StatusPill } from "@/components/status-pill";
 import {
   deleteRelease,
@@ -364,6 +365,8 @@ export default function ReleaseDetailPage() {
               {branchTip && (
                 <BranchTipCard tip={branchTip} />
               )}
+
+              <ReleaseNotesCard release={release} onChange={setRelease} />
             </>
           )}
         </div>

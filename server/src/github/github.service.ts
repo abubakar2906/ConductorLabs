@@ -48,6 +48,43 @@ export type ReleaseStatus = {
     branchTip: BranchTip | null
 }
 
+// One commit, flattened for a release-notes prompt.
+export type CommitContext = {
+    sha: string
+    shortSha: string
+    message: string
+    author: string | null
+    committedAt: string | null
+    prNumber: number | null
+}
+
+// Normalized git metadata for a ref range — the "release context" the
+// release-notes generator turns into Markdown via the LLM.
+export type RangeContext = {
+    aheadBy: number
+    totalCommits: number
+    commits: CommitContext[]
+    files: { filename: string; status: string; additions: number; deletions: number }[]
+    additions: number
+    deletions: number
+}
+
+// Flatten a GitHub commit object (list or compare shape) into CommitContext.
+function normalizeCommit(c: any): CommitContext {
+    const message = String(c.commit?.message ?? '').split('\n')[0]
+    const prNumber = c.pull_request?.url
+        ? Number(String(c.pull_request.url).split('/').pop()) || null
+        : null
+    return {
+        sha: String(c.sha ?? ''),
+        shortSha: String(c.sha ?? '').slice(0, 7),
+        message,
+        author: c.commit?.author?.name ?? c.author?.login ?? null,
+        committedAt: c.commit?.author?.date ?? null,
+        prNumber,
+    }
+}
+
 const GITHUB_API = 'https://api.github.com'
 
 @Injectable()
@@ -119,6 +156,60 @@ export class GithubService {
             committedAt: commit.commit?.author?.date ?? null,
             url: commit.html_url,
         }
+    }
+
+    // ---- Release-notes context --------------------------------------------
+    // Normalized git metadata for a ref range, shaped for an LLM prompt.
+
+    // The tip commit of a branch — used to decide whether stored notes are
+    // still current (cache check) and as the head of a compare range.
+    async getRefTipSha(token: string, owner: string, repo: string, ref: string): Promise<string> {
+        const commit = await this.gh(token, `/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}`)
+        return String(commit.sha)
+    }
+
+    // Commits + file stats between two refs, normalized for prompt building.
+    // `files`/`commits` are capped so a huge range can't blow up the prompt.
+    async getRangeContext(
+        token: string,
+        owner: string,
+        repo: string,
+        base: string,
+        head: string,
+    ): Promise<RangeContext> {
+        const range = await this.gh(
+            token,
+            `/repos/${owner}/${repo}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`,
+        )
+        return {
+            aheadBy: range.ahead_by ?? 0,
+            totalCommits: range.total_commits ?? 0,
+            commits: (range.commits ?? []).slice(0, 50).map(normalizeCommit),
+            files: (range.files ?? []).slice(0, 50).map((f: any) => ({
+                filename: String(f.filename ?? ''),
+                status: String(f.status ?? 'modified'),
+                additions: Number(f.additions ?? 0),
+                deletions: Number(f.deletions ?? 0),
+            })),
+            additions: (range.files ?? []).reduce((n: number, f: any) => n + (f.additions ?? 0), 0),
+            deletions: (range.files ?? []).reduce((n: number, f: any) => n + (f.deletions ?? 0), 0),
+        }
+    }
+
+    // The most recent commits on a ref — the fallback when there's no
+    // previous notes tip to diff against (first generation for a release).
+    async getRecentCommitsContext(
+        token: string,
+        owner: string,
+        repo: string,
+        ref: string,
+        limit = 50,
+    ): Promise<CommitContext[]> {
+        const commits = await this.gh(
+            token,
+            `/repos/${owner}/${repo}/commits?sha=${encodeURIComponent(ref)}&per_page=${limit}`,
+        )
+        return (commits ?? []).slice(0, limit).map(normalizeCommit)
     }
 
     // Small helper: call the GitHub REST API with the user's token attached.

@@ -12,6 +12,13 @@ export type Release = {
     // Set by the GitHub webhook each time a push lands on target_branch.
     // Nullable — older rows and repos without webhooks never get one.
     last_push_at: string | null
+    // AI-written release notes (Markdown) and the metadata around it.
+    release_notes: string | null
+    notes_generated_at: string | null
+    notes_edited: boolean
+    // Branch tip the notes were generated from; lets the server skip the
+    // LLM when nothing moved since the last generation.
+    notes_tip_sha: string | null
 }
 
 export type CreateReleaseInput = {

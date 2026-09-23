@@ -8,5 +8,6 @@ import { GithubService } from './github.service'
     imports: [AuthModule],
     controllers: [GithubController],
     providers: [GithubService],
+    exports: [GithubService], // ReleasesModule reuses it for release-notes context.
 })
 export class GithubModule { }
