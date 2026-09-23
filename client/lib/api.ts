@@ -74,6 +74,22 @@ export function createRelease(
   return apiPost<Release>("/releases", token, input);
 }
 
+// Same wrapper for DELETE — no body, just the path, and the deleted row comes back.
+async function apiDelete<T>(path: string, token: string | null): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    throw new Error(`API ${path} responded ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export function deleteRelease(token: string | null, id: string): Promise<Release> {
+  return apiDelete<Release>(`/releases/${id}`, token);
+}
+
 // --- GitHub repos & branches (for the New Release wizard) --------------------
 
 export type Repo = { fullName: string; defaultBranch: string };
