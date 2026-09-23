@@ -60,6 +60,20 @@ export type Release = {
   created_at: string;
   // Set by the GitHub webhook on each push to target_branch; null for older rows.
   last_push_at: string | null;
+  // AI-written release notes (Markdown) and the metadata around it.
+  release_notes: string | null;
+  notes_generated_at: string | null;
+  notes_edited: boolean;
+  notes_tip_sha: string | null;
+};
+
+// What POST /releases/:id/release-notes answers with — the server's
+// GenerateResult: the updated release row, whether it was served from the
+// tip cache, and how many commits the fresh generation was based on.
+export type GenerateNotesResponse = {
+  release: Release;
+  cached: boolean;
+  commitCount: number;
 };
 
 export function fetchReleases(token: string | null): Promise<Release[]> {
@@ -91,6 +105,42 @@ async function apiDelete<T>(path: string, token: string | null): Promise<T> {
 
 export function deleteRelease(token: string | null, id: string): Promise<Release> {
   return apiDelete<Release>(`/releases/${id}`, token);
+}
+
+// --- AI release notes --------------------------------------------------------
+
+// Same wrapper for PUT — a body, like POST, but with method overridden.
+async function apiPut<T>(path: string, token: string | null, body: unknown): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`API ${path} responded ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+// Generate (or reuse cached) AI release notes for a release.
+export function generateReleaseNotes(
+  token: string | null,
+  id: string,
+  opts: { force?: boolean } = {},
+): Promise<GenerateNotesResponse> {
+  return apiPost<GenerateNotesResponse>(`/releases/${id}/release-notes`, token, opts);
+}
+
+// Persist a hand-edited Markdown draft.
+export function saveReleaseNotes(
+  token: string | null,
+  id: string,
+  markdown: string,
+): Promise<Release> {
+  return apiPut<Release>(`/releases/${id}/release-notes`, token, { markdown });
 }
 
 // --- GitHub repos & branches (for the New Release wizard) --------------------
