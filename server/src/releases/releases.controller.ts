@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     NotFoundException,
     Param,
@@ -35,5 +36,15 @@ export class ReleasesController {
     @Post()
     create(@Req() req: any, @Body() body: CreateReleaseInput) {
         return this.releases.create(req.auth.sub, body)
+    }
+
+    // DELETE /releases/:id → remove a saved release. 404 when the id doesn't
+    // exist or belongs to a different user (the service treats both as "not
+    // yours"); the deleted row is returned so the client knows what left.
+    @Delete(':id')
+    async delete(@Req() req: any, @Param('id') id: string) {
+        const release = await this.releases.deleteByIdForUser(req.auth.sub, id)
+        if (!release) throw new NotFoundException('Release not found')
+        return release
     }
 }

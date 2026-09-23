@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { ArrowLeft, CircleAlert, GitBranch, GitPullRequest } from "lucide-react";
+import { ArrowLeft, CircleAlert, GitBranch, GitPullRequest, Loader2, Trash2 } from "lucide-react";
 import { StatusPill } from "@/components/status-pill";
-import { fetchRelease, fetchReleaseStatus, type Release } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { deleteRelease, fetchRelease, fetchReleaseStatus, type Release } from "@/lib/api";
 import { computeReadiness, type BlockingItem, type Readiness } from "@/lib/readiness";
 
 function repoShort(fullName: string): string {
@@ -37,12 +38,45 @@ function BlockingRow({ item }: { item: BlockingItem }) {
 export default function ReleaseDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const router = useRouter();
   const { getToken } = useAuth();
 
   const [release, setRelease] = useState<Release | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [statusError, setStatusError] = useState(false);
+
+  // Two-step delete: first click arms the button, second click fires the API.
+  // Armed state auto-cancels after 5s so a stray second tap can't delete later.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!confirmingDelete) return;
+    const t = setTimeout(() => setConfirmingDelete(false), 5000);
+    return () => clearTimeout(t);
+  }, [confirmingDelete]);
+
+  async function handleDelete() {
+    if (deleting) return;
+    if (!confirmingDelete) {
+      setDeleteError(null);
+      setConfirmingDelete(true);
+      return;
+    }
+    try {
+      const token = await getToken();
+      setDeleting(true);
+      await deleteRelease(token, id);
+      setConfirmingDelete(false);
+      router.push("/releases");
+    } catch {
+      setDeleting(false);
+      setConfirmingDelete(false);
+      setDeleteError("Couldn't delete this release. Try again.");
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -140,6 +174,45 @@ export default function ReleaseDetailPage() {
                     Safe to ship.
                   </p>
                 )}
+
+                <div className="mt-5 border-t border-border pt-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-card-foreground">Delete release</h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Removes this saved release. Nothing on GitHub is changed.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => (confirmingDelete ? void handleDelete() : setConfirmingDelete(true))}
+                      disabled={deleting}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 disabled:pointer-events-none disabled:opacity-60",
+                        confirmingDelete
+                          ? "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                          : "border-border bg-transparent text-muted-foreground hover:border-destructive/40 hover:text-destructive",
+                      )}
+                    >
+                      {deleting ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin" />
+                          Deleting…
+                        </>
+                      ) : confirmingDelete ? (
+                        "Confirm delete"
+                      ) : (
+                        <>
+                          <Trash2 className="size-3.5" />
+                          Delete release
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {deleteError && (
+                    <p className="mt-3 text-xs text-destructive">{deleteError}</p>
+                  )}
+                </div>
               </div>
             </>
           )}
